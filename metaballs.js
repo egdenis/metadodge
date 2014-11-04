@@ -2,11 +2,10 @@ var GAME;
 
 window.onload = function(){
   window.addEventListener('mousemove', onMousemove, false);
+  window.addEventListener("mousedown", onMousedown, false);
 
   GAME = new game();
-  console.log("gsf")
   GAME.metaball.makePoints(32);
-
   GAME.act();
 }
 
@@ -14,26 +13,38 @@ function game(){
   this.preRenderCanvas = document.createElement("canvas")
   this.ctxPreRender = this.preRenderCanvas.getContext("2d");
   this.ctx = canvas.getContext("2d");
-  canvas.style.cursor = 'none';
   canvas.style.border = "1px solid black"
 
-  
+  this.width = canvas.width = this.preRenderCanvas.width = 500;
+  this.height = canvas.height = this.preRenderCanvas.height = 500;
+  this.state = "menu";
 
-  this.preRenderCanvas.height = canvas.width = 500;
-  this.preRenderCanvas.width = canvas.height = 500;
-
-  this.width = canvas.width;
-  this.height = canvas.height;
-
-  this.player = new player();
+  this.ui = new UI([new Button(this.width/2,this.height/2,100,50,"game","menu",(this.init.bind(this)))]);
   this.metaball = new metaballs();
+
+
   }
 
 game.prototype.act = function(){
-  GAME.metaball.metabolize();
-  GAME.metaball.processMetaball();
-  GAME.player.act();
+  if (GAME.state == "game") {
+    GAME.player.act();
+  }
+    GAME.metaball.metabolize();
+    GAME.metaball.processMetaball();
+
+  GAME.ui.drawUI()
+  console.log(this.state);
   requestAnimFrame(GAME.act);
+
+}
+
+game.prototype.init = function(){
+  this.player = new player();
+  this.metaball = new metaballs();
+  this.metaball.makePoints(32);
+    canvas.style.cursor = 'none';
+  this.state = "game"
+
 }
 
 function metaballs(){
@@ -92,19 +103,22 @@ metaballs.prototype.processMetaball = function(){
     }
   }
 
-  var ymax = GAME.player.y+GAME.player.radius; 
-  var xmax = GAME.player.x+GAME.player.radius;
+  if (GAME.state == "game") {
+    var ymax = GAME.player.y+GAME.player.radius; 
+    var xmax = GAME.player.x+GAME.player.radius;
 
-  for (var y = GAME.player.y-GAME.player.radius; y < ymax; y+=3) {
-    for (var x = GAME.player.x-GAME.player.radius; x < xmax; x+=3) {
-      var index = (y * GAME.width + x) * 4;
-      if (pixel[index+3]) {
-        
-        GAME.player.color = "rgba(0,0,0,0)"
+    for (var y = GAME.player.y-GAME.player.radius; y < ymax; y+=3) {
+      for (var x = GAME.player.x-GAME.player.radius; x < xmax; x+=3) {
+        var index = (y * GAME.width + x) * 4;
+        if (pixel[index+3]) {
+          
+          GAME.player.color = "rgba(0,0,0,0)"
 
-      };
+        };
+      }
     }
   }
+
   GAME.ctx.putImageData(frame, 0, 0);    
 
 }
@@ -131,7 +145,12 @@ player.prototype.act = function(){
 
 function onMousedown(e){
   var pos = getMousePos(canvas, e);
+  for (var i = 0; i < GAME.ui.buttons.length; i++) {
 
+    if (GAME.ui.buttons[i].isClicked(pos.x,pos.y)&&GAME.state == GAME.ui.buttons[i].state) {
+      GAME.ui.buttons[i].callback();
+    };
+  };  
 }
 
 
@@ -145,8 +164,17 @@ function getMousePos(canvas, evt) {
 
 function onMousemove(e){
   var pos = getMousePos(canvas, e);
-  GAME.player.x = pos.x;
-  GAME.player.y = pos.y;
+  if (GAME.state == "game") {
+    GAME.player.x = pos.x;
+    GAME.player.y = pos.y;
+  }
+  for (var i = GAME.ui.buttons.length - 1; i >= 0; i--) {
+      if (GAME.ui.buttons[i].isClicked(pos.x,pos.y)) {
+        GAME.ui.buttons[i].fillStyle = "rgb(80,80,80)";
+      }
+      else
+        GAME.ui.buttons[i].fillStyle = "rgb(50,50,50)";
+    };
 }
 
 window.requestAnimFrame = (function(){
