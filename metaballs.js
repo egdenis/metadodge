@@ -44,7 +44,7 @@ function metaballs(){
   this.points = [];
   this.threshold = 220;
   this.MAX_SIZE = 200;
-  this.MAX_SPEED = 4;
+  this.MAX_SPEED = 3;
   }
 
 metaballs.prototype.makePoints = function(num){
